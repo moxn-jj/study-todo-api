@@ -2,7 +2,7 @@ package com.mun.todo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.mun.todo.domain.Todo;
+import com.mun.todo.entity.Todo;
 import com.mun.todo.repository.TodoRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,6 +1,6 @@
 package com.mun.todo.service;
 
-import com.mun.todo.domain.Todo;
+import com.mun.todo.entity.Todo;
 import com.mun.todo.repository.TodoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;

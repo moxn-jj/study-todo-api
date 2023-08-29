@@ -1,6 +1,6 @@
 package com.mun.todo.controller.dto;
 
-import com.mun.todo.domain.Member;
+import com.mun.todo.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

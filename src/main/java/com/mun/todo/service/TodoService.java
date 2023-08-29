@@ -1,6 +1,6 @@
 package com.mun.todo.service;
 
-import com.mun.todo.domain.Todo;
+import com.mun.todo.entity.Todo;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;

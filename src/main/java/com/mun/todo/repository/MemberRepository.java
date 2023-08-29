@@ -1,6 +1,6 @@
 package com.mun.todo.repository;
 
-import com.mun.todo.domain.Member;
+import com.mun.todo.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

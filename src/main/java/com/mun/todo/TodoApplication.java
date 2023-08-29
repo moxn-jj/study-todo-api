@@ -1,14 +1,7 @@
 package com.mun.todo;
 
-import com.mun.todo.domain.Todo;
-import com.mun.todo.repository.TodoRepository;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-
-import java.time.LocalDateTime;
-import java.util.stream.IntStream;
 
 @SpringBootApplication
 public class TodoApplication {
