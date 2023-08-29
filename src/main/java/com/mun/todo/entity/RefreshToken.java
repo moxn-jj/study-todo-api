@@ -17,19 +17,20 @@ import javax.persistence.Table;
 public class RefreshToken {
 
     @Id
-    private Long id;
+    @Column(name = "rt_key")
+    private String key;
 
-    @Id
-    private String token;
+    @Column(name = "rt_value")
+    private String value;
 
     @Builder
-    public RefreshToken(Long id, String token) {
-        this.id = id;
-        this.token = token;
+    public RefreshToken(String key, String value) {
+        this.key = key;
+        this.value = value;
     }
 
     public RefreshToken updateValue(String token) {
-        this.token = token;
+        this.value = token;
         return this;
     }
 }
