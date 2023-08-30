@@ -12,6 +12,8 @@ import javax.persistence.*;
 @Entity
 public class Member {
 
+    // test : git branch feature-member 1
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
