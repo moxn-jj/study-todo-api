@@ -88,7 +88,7 @@ public class TokenProvider {
 
         try {
 
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJwt(token);
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
 
         // SecurityException : Exception when having the invalid jwt signature
         // MalformedJwtException : Exception when having the invalid token structure
@@ -112,14 +112,14 @@ public class TokenProvider {
             log.info("JWT 토큰이 잘못되었습니다.");
         }
 
-        return false;
+        return true;
     }
 
     private Claims parseClaims(String accessToken) {
 
         try {
 
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJwt(accessToken).getBody();
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
         }catch (ExpiredJwtException e) {
 
             return e.getClaims();

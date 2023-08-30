@@ -20,7 +20,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<MemberResponseDto> signup(@RequestBody MemberRequestDto memberRequestDto) { // TODO : requestbody annotation 꼭 필요한 지 확인하기
+    public ResponseEntity<MemberResponseDto> signup(@RequestBody MemberRequestDto memberRequestDto) {
+        System.out.println(memberRequestDto.getEmail());
         return ResponseEntity.ok(authService.signup(memberRequestDto));
     }
 
@@ -31,6 +32,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<TokenDto> refresh(@RequestBody TokenRequestDto tokenRequestDto) {
+        System.out.println(tokenRequestDto.getAccessToken());
         return ResponseEntity.ok(authService.refresh(tokenRequestDto));
     }
 
