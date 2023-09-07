@@ -17,9 +17,13 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    /**
+     * 현재 로그인 중인 내 정보 가져오기 (from SecurityContext)
+     * @return
+     */
     @GetMapping("/me")
     public ResponseEntity<MemberResponseDto> findMemberInfoById() {
-        System.out.println("/me");
+
         return ResponseEntity.ok(memberService.findMemberInfoById(SecurityUtil.getCurrentMemberId()));
     }
 

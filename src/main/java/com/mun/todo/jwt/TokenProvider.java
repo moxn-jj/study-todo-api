@@ -21,6 +21,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+/**
+ * 유저 정보로 JWT 토큰을 만들거나
+ * 토큰으로부터 유저 정보를 가져옴
+ */
 @Slf4j
 @Component
 public class TokenProvider {
@@ -32,11 +36,20 @@ public class TokenProvider {
 
     private final Key key;
 
+    /**
+     * application.yml에 정의한 secret 값을 가져와서 JWT 토큰을 생성함
+     * @param secretKey
+     */
     public TokenProvider(@Value("${jwt.secret}") String secretKey) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
+    /**
+     * 유저 정보를 넘겨받아서 AccessToken과 RefreshToken을 생성함
+     * @param authentication
+     * @return
+     */
     public TokenDto generateTokenDto(Authentication authentication) {
 
         String authorities = authentication.getAuthorities().stream()
@@ -46,6 +59,8 @@ public class TokenProvider {
         long now = (new Date()).getTime();
 
         Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
+
+        // 유저 정보, 권한 정보, 만료일자 담음
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
@@ -53,6 +68,7 @@ public class TokenProvider {
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
 
+        // 만료일자만 담음
         String refreshToken = Jwts.builder()
                 .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
                 .signWith(key, SignatureAlgorithm.HS512)
@@ -66,6 +82,11 @@ public class TokenProvider {
                 .build();
     }
 
+    /**
+     * JWT 토큰을 복호화하여 토큰에 들어있는 정보를 가져옴
+     * @param accessToken
+     * @return
+     */
     public Authentication getAuthentication(String accessToken) {
 
         Claims claims = parseClaims(accessToken);
@@ -84,10 +105,16 @@ public class TokenProvider {
         return new UsernamePasswordAuthenticationToken(principle, "", authorities);
     }
 
+    /**
+     * 토큰 정보를 검증
+     * @param token
+     * @return
+     */
     public boolean validateToken(String token) {
 
         try {
 
+            // JWT 모듈이 알아서 Exception을 던져줌
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
 
         // SecurityException : Exception when having the invalid jwt signature
