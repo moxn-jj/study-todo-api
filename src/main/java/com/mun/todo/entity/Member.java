@@ -1,5 +1,6 @@
 package com.mun.todo.entity;
 
+import com.mun.todo.enums.Authority;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

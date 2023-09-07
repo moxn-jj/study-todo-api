@@ -1,6 +1,6 @@
 package com.mun.todo.controller.dto;
 
-import com.mun.todo.entity.Authority;
+import com.mun.todo.enums.Authority;
 import com.mun.todo.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

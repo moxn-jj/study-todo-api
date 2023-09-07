@@ -6,13 +6,12 @@ import com.mun.todo.controller.dto.TokenDto;
 import com.mun.todo.controller.dto.TokenRequestDto;
 import com.mun.todo.entity.Member;
 import com.mun.todo.entity.RefreshToken;
+import com.mun.todo.enums.CustomErrorCode;
+import com.mun.todo.exception.CustomException;
 import com.mun.todo.jwt.TokenProvider;
 import com.mun.todo.repository.MemberRepository;
 import com.mun.todo.repository.RefreshTokenRepository;
-import jdk.nashorn.internal.parser.Token;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -34,7 +33,7 @@ public class AuthService {
     public MemberResponseDto signup(MemberRequestDto memberRequestDto) {
 
         if(memberRepository.existsByEmail(memberRequestDto.getEmail())) {
-            throw new RuntimeException("이미 가입되어 있는 유저입니다.");
+            throw new CustomException(CustomErrorCode.ERR_UNAUTHORIZED);
         }
 
         Member member = memberRequestDto.toMember(passwordEncoder);
