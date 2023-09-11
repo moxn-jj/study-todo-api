@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @ToString
 @Entity
 @Table
-public class Todo implements Serializable {
+public class Todo extends Common implements Serializable {
 
     private static final long serialVersionUID = -947585423656694361L;
 

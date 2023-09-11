@@ -11,7 +11,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Table(name = "member") // 엔티티와 매핑할 테이블을 지정
 @Entity(name = "member") // 해당 클래스를 JPA가 관리하게 함, DB 테이블과 매핑할 클래스에 필수로 붙여야 함, 기본생성자 필수로 가져야 함
-public class Member {
+public class Member extends Common {
 
     @Id
     @Column(name = "member_id")
