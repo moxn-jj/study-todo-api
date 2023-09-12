@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler({CustomException.class})
-    public ResponseEntity<ErrorCodeDto> exceptionHandler(CustomException e) {
+    public ResponseEntity<ErrorCodeDto> customExceptionHandler(CustomException e) {
 
         return ResponseEntity
                 .status(e.getError().getStatus())
@@ -30,6 +30,7 @@ public class ExceptionHandler {
 
         String errorMessage = "";
 
+        // TODO : ENUM 으로 같이 관리할 방법?
         if (e instanceof BadCredentialsException) {
             errorMessage = "아이디 또는 비밀번호가 맞지 않습니다. 다시 확인해 주세요.";
         } else if (e instanceof InternalAuthenticationServiceException) {

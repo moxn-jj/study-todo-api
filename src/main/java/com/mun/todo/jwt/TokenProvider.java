@@ -1,10 +1,11 @@
 package com.mun.todo.jwt;
 
 import com.mun.todo.controller.dto.TokenDto;
+import com.mun.todo.enums.CustomErrorCode;
+import com.mun.todo.exception.CustomException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jdk.nashorn.internal.codegen.ClassEmitter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -92,7 +93,7 @@ public class TokenProvider {
         Claims claims = parseClaims(accessToken);
 
         if(claims.get(AUTHORITIES_KEY) == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
+            throw new CustomException(CustomErrorCode.ERR_UNAUTHORIZED_REFRESH_TOKEN);
         }
 
         Collection<? extends GrantedAuthority> authorities =
