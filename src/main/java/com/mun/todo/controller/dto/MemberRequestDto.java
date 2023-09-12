@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/**
+ * 사용자가 로그인 시도한 정보
+ */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
