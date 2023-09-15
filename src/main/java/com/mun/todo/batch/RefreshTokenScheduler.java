@@ -20,12 +20,14 @@ import java.util.Map;
 @EnableScheduling // 스케쥴러 기능 활성화
 @RequiredArgsConstructor
 @Component
-public class ExampleScheduler {
+public class RefreshTokenScheduler {
 
     private final Job job;
     private final JobLauncher jobLauncher;
 
-    @Scheduled(cron="0 * 17 * * ?")
+    // execute 2 minute after the application is started
+    @Scheduled(fixedDelay = 120000) // for test
+//    @Scheduled(cron="0 15 17 * * *") // 오후 5시 15분에 실행
     public void startJob() {
         try {
             Map<String, JobParameter> jobParametersMap = new HashMap<>();
