@@ -15,4 +15,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     Long deleteRefreshTokensByModifiedAtBetween(LocalDateTime start, LocalDateTime end);
 
+    void deleteRefreshTokensByKey(String key);
+
 }
