@@ -7,15 +7,15 @@ import javax.persistence.*;
 
 @Getter
 @NoArgsConstructor
-@Table(name = "refresh_token")
+@Table(name = "REFRESH_TOKEN")
 @Entity
 public class RefreshToken extends Common {
 
     @Id
-    @Column(name = "rt_key")
+    @Column(name = "MEMBER_ID")
     private String key;
 
-    @Column(name = "rt_value")
+    @Column(name = "REFRESH_TOKEN")
     private String value;
 
     @Builder

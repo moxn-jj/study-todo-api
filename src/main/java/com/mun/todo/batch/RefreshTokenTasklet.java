@@ -31,9 +31,9 @@ public class RefreshTokenTasklet implements Tasklet {
 
         log.info("▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ Start Delete RefreshToken ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼");
 
-        Long deleteCnt = refreshTokenRepository.deleteRefreshTokensByModifiedAtBetween(LocalDateTime.now().minusMinutes(1), LocalDateTime.now());
+        Long deleteCnt = refreshTokenRepository.deleteRefreshTokensByModifiedAtBefore(LocalDateTime.now().minusMinutes(1));
 
-        log.info("▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ End Delete RefreshToken : " + deleteCnt + "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼");
+        log.info("▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ End Delete RefreshToken : " + deleteCnt + " ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼");
         return RepeatStatus.FINISHED;
     }
 }

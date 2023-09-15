@@ -29,7 +29,6 @@ public class JpaMappingTest {
 
         Todo todo =  Todo.builder()
                 .content(content)
-                .createdDateTime(LocalDateTime.now())
                 .build();
         
         return entityManager.persist(todo);
@@ -58,7 +57,6 @@ public class JpaMappingTest {
         Todo todo = Todo.builder()
                 .content("testSave 테스트 하기")
                 .isComplete(true)
-                .createdDateTime(LocalDateTime.now())
                 .build();
 
         // when

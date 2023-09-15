@@ -42,7 +42,6 @@ public class TodoController {
     @PostMapping
     public ResponseEntity<String> postTodo(@RequestBody Todo todo) throws Exception {
 
-        todo.setCreatedDateTime(LocalDateTime.now());
         todo.setIsComplete(false);
         todoService.postTodo(todo);
 
