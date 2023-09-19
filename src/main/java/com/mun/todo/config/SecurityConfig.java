@@ -3,6 +3,7 @@ package com.mun.todo.config;
 import com.mun.todo.jwt.JwtAccessDeniedHandler;
 import com.mun.todo.jwt.JwtAuthenticationEntryPoint;
 import com.mun.todo.jwt.TokenProvider;
+import com.mun.todo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +35,7 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
 
         return (web) -> web.ignoring()
-                .antMatchers("/h2-console/**", "/favicon.ico", "/api/todos"); // TODO : /api/todos 는 잠시 테스트 용도로 추가
+                .antMatchers("/h2-console/**", "/favicon.ico");
     }
 
     @Bean

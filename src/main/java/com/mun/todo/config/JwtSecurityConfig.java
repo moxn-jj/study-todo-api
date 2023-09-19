@@ -1,5 +1,6 @@
 package com.mun.todo.config;
 
+import com.mun.todo.jwt.ExceptionHandlerFilter;
 import com.mun.todo.jwt.JwtFilter;
 import com.mun.todo.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,10 @@ public class JwtSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
     public void configure(HttpSecurity http) {
 
         JwtFilter customFilter = new JwtFilter(tokenProvider);
-        http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);
+        ExceptionHandlerFilter exceptionHandlerFilter = new ExceptionHandlerFilter();
+
+        http
+            .addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(exceptionHandlerFilter, JwtFilter.class);
     }
 }

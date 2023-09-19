@@ -51,39 +51,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if(StringUtils.hasText(accessToken)){
 
-            try {
-                // 2. 토큰 유효성 검사하고 만료되었으면 갱신하기
-                tokenProvider.validateAndUpdateAccessToken(accessToken, request, response);
+            // 2. 토큰 유효성 검사하고 만료되었으면 갱신하기
+            tokenProvider.validateAndUpdateAccessToken(accessToken, request, response);
 
-                // 2-1. 토큰에서 authentication 객체 가지고 오기
-                Authentication authentication = tokenProvider.getAuthentication(accessToken);
-                // 2-2. 가져온 인증 객체 (authentication)를 SecurityContextHolder에 담기
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                filterChain.doFilter(request, response);
-            }catch (UnsupportedJwtException e) {
-
-                jwtExceptionHandler(response, CustomErrorCode.ERR_UNSUPPORTED_ACCESS_TOKEN);
-            }catch (MalformedJwtException e){
-
-                jwtExceptionHandler(response, CustomErrorCode.ERR_WRONG_ACCESS_TOKEN);
-            }catch (SignatureException e){
-
-                jwtExceptionHandler(response, CustomErrorCode.ERR_SIGNATURE_TOKEN);
-            }catch (IllegalArgumentException e) {
-
-                jwtExceptionHandler(response, CustomErrorCode.ERR_ILLEGAL_ARGUMENT_ACCESS_TOKEN);
-            }catch(CustomException e) {
-
-                jwtExceptionHandler(response, e.getError());
-            }catch (Exception e) {
-
-                jwtExceptionHandler(response, CustomErrorCode.ERR_UNKNOWN);
-            }
-        }else {
-
-            filterChain.doFilter(request, response);
+            // 2-1. 토큰에서 authentication 객체 가지고 오기
+            Authentication authentication = tokenProvider.getAuthentication(accessToken);
+            // 2-2. 가져온 인증 객체 (authentication)를 SecurityContextHolder에 담기
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
+
+        filterChain.doFilter(request, response);
     }
 
     /**
@@ -101,16 +78,4 @@ public class JwtFilter extends OncePerRequestFilter {
         return null;
     }
 
-    // 토큰에 대한 오류가 발생했을 때, 커스터마이징해서 Exception 처리 값을 클라이언트에게 알려준다.
-    private void jwtExceptionHandler(HttpServletResponse response, CustomErrorCode errorCode) {
-        response.setStatus(errorCode.getStatus().value());
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        try {
-            String json = new ObjectMapper().writeValueAsString(ErrorCodeDto.builder().errorCode(errorCode.getCode()).errorMessage(errorCode.getMessage()).build());
-            response.getWriter().write(json);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
 }
