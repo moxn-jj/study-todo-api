@@ -25,8 +25,8 @@ public class RefreshTokenScheduler {
     private final Job job;
     private final JobLauncher jobLauncher;
 
-    // execute 2 minute after the application is started
-    @Scheduled(fixedDelay = 120000) // for test
+    // execute 10 minute after the application is started
+    @Scheduled(fixedDelay = 1000 * 60 * 10)
 //    @Scheduled(cron="0 15 17 * * *") // 오후 5시 15분에 실행
     public void startJob() {
         try {
