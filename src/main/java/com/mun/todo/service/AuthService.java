@@ -3,7 +3,6 @@ package com.mun.todo.service;
 import com.mun.todo.controller.dto.MemberRequestDto;
 import com.mun.todo.controller.dto.MemberResponseDto;
 import com.mun.todo.controller.dto.TokenDto;
-import com.mun.todo.controller.dto.TokenRequestDto;
 import com.mun.todo.entity.Member;
 import com.mun.todo.entity.RefreshToken;
 import com.mun.todo.enums.CustomErrorCode;
@@ -12,12 +11,14 @@ import com.mun.todo.jwt.TokenProvider;
 import com.mun.todo.repository.MemberRepository;
 import com.mun.todo.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 회원 비지니스 로직
@@ -52,11 +53,12 @@ public class AuthService {
 
     /**
      * 로그인
-     * @param memberRequestDto 
+     * @param memberRequestDto
+     * @param response
      * @return
      */
     @Transactional
-    public TokenDto signin(MemberRequestDto memberRequestDto) {
+    public TokenDto signin(MemberRequestDto memberRequestDto, HttpServletResponse response) {
 
         // 사용자가 입력한 값을 기반으로 AuthenticationToken 생성
         UsernamePasswordAuthenticationToken authenticationToken = memberRequestDto.toAuthentication();
@@ -75,37 +77,21 @@ public class AuthService {
                 .build();
         refreshTokenRepository.save(refreshToken);
 
+        // refreshToken을 Cookie에 담음
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDto.getRefreshToken())
+                .maxAge(7 * 24 * 60 * 60)
+                .path("/")
+                .secure(true)
+                .sameSite("None")
+                .httpOnly(true)
+                .build();
+        response.setHeader("Set-Cookie", cookie.toString());
+
+        // refreshToken 값을 기본값으로 초기화
+        tokenDto.resetRefreshTokenForSecure();
+
         // 로그인이 정상적으로 수행되면 토큰을 리턴
         return tokenDto;
     }
 
-    @Transactional
-    public TokenDto refresh(TokenRequestDto tokenRequestDto) {
-
-        // 사용자가 보내온 Refresh Token 검증
-        if(!tokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
-            throw new CustomException(CustomErrorCode.ERR_INVALID_REFRESH_TOKEN);
-        }
-
-        // access token에서 사용자 정보(member id) 가져옴
-        Authentication authentication = tokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
-
-        // DB에서 member id를 기반으로 refresh token 값 가져옴
-        RefreshToken refreshToken = refreshTokenRepository.findByKey(authentication.getName())
-                .orElseThrow(() -> new CustomException(CustomErrorCode.ERR_ALREADY_LOGOUT)); // 이미 로그아웃된 사용자의 경우
-
-        // db에 저장되어 있는 refresh token과 사용자가 보낸 refresh token이 같은지 비교
-        if(!refreshToken.getValue().equals(tokenRequestDto.getRefreshToken())) {
-            throw new CustomException(CustomErrorCode.ERR_INVALID_TOKEN_USER);
-        }
-
-        // 새로운 토큰 생성
-        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
-
-        // db에 새로운 토큰 업데이트
-        RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken());
-        refreshTokenRepository.save(newRefreshToken);
-
-        return tokenDto;
-    }
 }
