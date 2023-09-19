@@ -1,17 +1,34 @@
 package com.mun.todo.service;
 
 import com.mun.todo.entity.Todo;
+import com.mun.todo.repository.TodoRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-public interface TodoService {
+@Service
+@RequiredArgsConstructor
+public class TodoService {
 
-    List<Todo> getTodos(Sort sort) throws Exception;
+    private final TodoRepository todoRepository;
 
-    void postTodo(Todo todo) throws Exception;
 
-    void deleteTodo(Long id) throws Exception;
+    public List<Todo> getTodos(Sort sort) {
+        return todoRepository.findAll(sort);
+    }
 
-    Todo findTodoById(Long id) throws Exception;
+    public void postTodo(Todo todo) {
+        todoRepository.save(todo);
+    }
+
+    public void deleteTodo(Long id) {
+        todoRepository.deleteById(id);
+    }
+
+    public Todo findTodoById(Long id) {
+        return todoRepository.findById(id).orElse(new Todo());
+    }
 }
