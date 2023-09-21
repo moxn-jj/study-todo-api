@@ -1,16 +1,14 @@
 package com.mun.todo.jwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mun.todo.controller.dto.ErrorCodeDto;
-import com.mun.todo.enums.CustomErrorCode;
+import com.mun.todo.config.SecurityConfig;
 import com.mun.todo.exception.CustomException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,6 +22,7 @@ import java.io.IOException;
  * Spring Request 앞에 넣을 custom filter
  */
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
@@ -46,9 +45,18 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, CustomException {
 
+        // permitAll()로 설정한 경로는 토큰 검사를 하지 않음
+        AntPathMatcher pathMatcher = new AntPathMatcher();
+        String uri = request.getRequestURI();
+        for(String path : SecurityConfig.PUBLIC_PATHS){
+            if (pathMatcher.match(path, uri)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
+
         // 1. request의 header에서 토큰 꺼내기
         String accessToken = resolveToken(request);
-
         if(StringUtils.hasText(accessToken)){
 
             // 2. 토큰 유효성 검사하고 만료되었으면 갱신하기
@@ -58,9 +66,12 @@ public class JwtFilter extends OncePerRequestFilter {
             Authentication authentication = tokenProvider.getAuthentication(accessToken);
             // 2-2. 가져온 인증 객체 (authentication)를 SecurityContextHolder에 담기
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            filterChain.doFilter(request, response);
+        }else {
+            throw new AuthenticationException("AcessToken is null") {};
         }
 
-        filterChain.doFilter(request, response);
     }
 
     /**
