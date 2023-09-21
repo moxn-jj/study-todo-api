@@ -7,12 +7,13 @@ import lombok.ToString;
 @Getter
 @ToString
 public class ErrorCodeDto {
-    private String errorCode;
-    private String errorMessage;
+
+    private String code;
+    private String message;
 
     @Builder
-    public ErrorCodeDto(String errorCode, String errorMessage){
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
+    public ErrorCodeDto(String code, String message){
+        this.code = code;
+        this.message = message;
     }
 }
