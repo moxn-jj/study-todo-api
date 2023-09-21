@@ -1,9 +1,6 @@
 package com.mun.todo.config;
 
-import com.mun.todo.jwt.JwtAccessDeniedHandler;
-import com.mun.todo.jwt.JwtAuthenticationEntryPoint;
-import com.mun.todo.jwt.TokenProvider;
-import com.mun.todo.service.AuthService;
+import com.mun.todo.jwt.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +10,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 
 /**
  * 스프링 시큐리티 설정
@@ -21,9 +21,13 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final TokenProvider tokenProvider;
+    public static final String[] PUBLIC_PATHS = { "/api/auth/**"};
+
+    private final ExceptionHandlerFilter exceptionHandlerFilter;
+
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final JwtFilter jwtFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -64,12 +68,14 @@ public class SecurityConfig {
                 // 비회원 접근 가능 페이지 설정
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers(PUBLIC_PATHS).permitAll()
                 .anyRequest().authenticated()
 
-                // jwt 필터를 등록했던 JwtSecurityConfig 클래스 적용
                 .and()
-                .apply(new JwtSecurityConfig(tokenProvider));
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(exceptionHandlerFilter, ExceptionTranslationFilter.class)
+
+        ;
 
         return http.build();
     }
