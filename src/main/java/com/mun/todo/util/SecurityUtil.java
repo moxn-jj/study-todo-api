@@ -10,8 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @Slf4j
 public class SecurityUtil {
 
-    // private SecurityUtil() {}
-
     /**
      * 현재 로그인 중인 내 정보 가져오기 (from SecurityContext)
      * @return Long : 현재 로그인 중인 id
