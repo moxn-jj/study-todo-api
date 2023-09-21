@@ -1,24 +1,26 @@
 package com.mun.todo.controller;
 
 import com.mun.todo.entity.Todo;
+import com.mun.todo.enums.CustomErrorCode;
+import com.mun.todo.exception.CustomException;
 import com.mun.todo.service.TodoService;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.micrometer.core.instrument.util.StringUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-@Controller
+@RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/todos")
 public class TodoController {
 
-    @Autowired
-    private TodoService todoService;
+    private final TodoService todoService;
 
     /**
      * 목록 조회
@@ -26,9 +28,12 @@ public class TodoController {
      * @throws Exception
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getTodos() throws Exception {
+    public ResponseEntity<?> getTodos(Authentication auth) {
 
-        List<Todo> todos = todoService.getTodos(Sort.by(Sort.Direction.ASC, "id"));
+        if(auth == null || StringUtils.isBlank(auth.getName())){
+            throw new CustomException(CustomErrorCode.ERR_BAD_REQUEST);
+        }
+        List<Todo> todos = todoService.getTodos(Long.parseLong(auth.getName()), Sort.by(Sort.Direction.DESC, "id"));
 
         return ResponseEntity.ok(todos);
     }
@@ -40,12 +45,13 @@ public class TodoController {
      * @throws Exception
      */
     @PostMapping
-    public ResponseEntity<String> postTodo(@RequestBody Todo todo) throws Exception {
+    public ResponseEntity<HttpStatus> postTodo(@RequestBody Todo todo, Authentication auth) {
 
         todo.setIsComplete(false);
+        todo.setMemberId(Long.parseLong(auth.getName()));
         todoService.postTodo(todo);
 
-        return new ResponseEntity<String>("SUCCESS", HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -55,14 +61,14 @@ public class TodoController {
      * @throws Exception
      */
     @PutMapping("/{id}")
-    public ResponseEntity<String> putTodo(@PathVariable("id") Long id) throws Exception {
+    public ResponseEntity<HttpStatus> putTodo(@PathVariable("id") Long id) {
 
         Todo todo = todoService.findTodoById(id);
         Boolean isComplete = todo.getIsComplete()? false : true;
         todo.setIsComplete(isComplete);
         todoService.postTodo(todo);
 
-        return new ResponseEntity<String>("SUCCESS", HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -72,10 +78,10 @@ public class TodoController {
      * @throws Exception
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTodo(@PathVariable("id") Long id) throws Exception {
+    public ResponseEntity<HttpStatus> deleteTodo(@PathVariable("id") Long id) {
 
         todoService.deleteTodo(id);
 
-        return new ResponseEntity<String>("SUCCESS", HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

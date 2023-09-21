@@ -21,6 +21,9 @@ public class Todo extends Common implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "MEMBER_ID")
+    private Long memberId;
+
     @Column(name = "CONTENT")
     private String content;
 
@@ -29,12 +32,4 @@ public class Todo extends Common implements Serializable {
 
     @Column(name = "COLOR")
     private String color;
-
-    @Builder
-    public Todo(Long id, String content, Boolean isComplete, String color) {
-        this.id = id;
-        this.content = content;
-        this.isComplete = isComplete;
-        this.color = color;
-    }
 }
