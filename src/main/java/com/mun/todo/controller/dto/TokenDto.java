@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 public class TokenDto {
 
     private String grantType;
-    private String accessToken;
-    private String refreshToken;
+    private String encryptoAccessToken;
+    private String encryptoRefreshToken;
     private Long accessTokenExpiredsIn;
 
     /**
@@ -23,6 +23,6 @@ public class TokenDto {
      * @return refreshToken에 "HTTP_ONLY"를 담아서 보냄
      */
     public String resetRefreshTokenForSecure() {
-        return this.refreshToken = "HTTP_ONLY";
+        return this.encryptoRefreshToken = "HTTP_ONLY";
     }
 }

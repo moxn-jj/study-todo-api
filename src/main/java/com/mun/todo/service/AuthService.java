@@ -73,12 +73,12 @@ public class AuthService {
         // Refresh Token을 DB에 저장
         RefreshToken refreshToken = RefreshToken.builder()
                 .key(authentication.getName())
-                .value(tokenDto.getRefreshToken())
+                .value(tokenDto.getEncryptoRefreshToken())
                 .build();
         refreshTokenRepository.save(refreshToken);
 
         // refreshToken을 Cookie에 담음
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDto.getRefreshToken())
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDto.getEncryptoRefreshToken())
                 .maxAge(7 * 24 * 60 * 60)
                 .path("/")
                 .secure(true)

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mun.todo.controller.dto.ErrorCodeDto;
 import com.mun.todo.enums.CustomErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
@@ -25,7 +26,7 @@ public class ExceptionUtil {
     }
 
     public void sendErrorResponse(HttpServletResponse response, ErrorCodeDto errorCodeDto) {
-        response.setStatus(response.getStatus());
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         try {

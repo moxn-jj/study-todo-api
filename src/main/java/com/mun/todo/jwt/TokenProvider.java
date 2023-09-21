@@ -5,6 +5,7 @@ import com.mun.todo.entity.RefreshToken;
 import com.mun.todo.enums.CustomErrorCode;
 import com.mun.todo.exception.CustomException;
 import com.mun.todo.repository.RefreshTokenRepository;
+import com.mun.todo.util.CryptoUtil;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -37,9 +38,8 @@ import java.util.stream.Collectors;
 @Component
 public class TokenProvider {
 
-    private static final String AUTHORITIES_KEY = "auth";
-    private static final String BEARER_TYPE = "Bearer";
-
+    public static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String BEARER_PREFIX = "Bearer";
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 1; // 1 mins for test
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 30 * 24; // 1 days
 
@@ -77,7 +77,7 @@ public class TokenProvider {
         // 유저 정보, 권한 정보, 만료일자 담음
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
-                .claim(AUTHORITIES_KEY, authorities)
+                .claim(AUTHORIZATION_HEADER, authorities)
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
@@ -89,10 +89,10 @@ public class TokenProvider {
                 .compact();
 
         return TokenDto.builder()
-                .grantType(BEARER_TYPE)
-                .accessToken(accessToken)
+                .grantType(BEARER_PREFIX)
+                .encryptoAccessToken(CryptoUtil.encrypt(accessToken))
                 .accessTokenExpiredsIn(accessTokenExpiresIn.getTime())
-                .refreshToken(refreshToken)
+                .encryptoRefreshToken(CryptoUtil.encrypt(refreshToken))
                 .build();
     }
 
@@ -105,12 +105,12 @@ public class TokenProvider {
 
         Claims claims = parseClaims(accessToken);
 
-        if(claims.get(AUTHORITIES_KEY) == null) {
+        if(claims.get(AUTHORIZATION_HEADER) == null) {
             throw new CustomException(CustomErrorCode.ERR_UNAUTHORIZED_REFRESH_TOKEN);
         }
 
         Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
+                Arrays.stream(claims.get(AUTHORIZATION_HEADER).toString().split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
@@ -121,34 +121,33 @@ public class TokenProvider {
 
     /**
      * 토큰 정보를 검증하고 만료 되었을 경우 갱신하여 response header에 넣음
-     * @param accessToken
+     * @param encryptoAccessToken
      * @return
      */
-    public void validateAndUpdateAccessToken(String accessToken, HttpServletRequest request, HttpServletResponse response) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, IllegalArgumentException {
+    public void validateAndUpdateAccessToken(String encryptoAccessToken, HttpServletRequest request, HttpServletResponse response) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, IllegalArgumentException {
 
         try {
 
-            this.validateToken(accessToken);
+            this.validateToken(encryptoAccessToken);
         }catch (ExpiredJwtException e) {
 
-            String newAccessToken = this.updateRefreshToken(accessToken, request).getAccessToken();
-            response.addHeader("Authorization", "Bearer " + newAccessToken);
+            String newEncryptoAccessToken = this.updateRefreshToken(encryptoAccessToken, request).getEncryptoAccessToken();
+            response.addHeader("Authorization", BEARER_PREFIX + " " + newEncryptoAccessToken);
         }
     }
 
     /**
      * token 유효성 검사
-     * @param token
+     * @param encryptToken
      * @throws ExpiredJwtException
      * @throws UnsupportedJwtException
      * @throws MalformedJwtException
      * @throws IllegalArgumentException
      */
-    private boolean validateToken(String token) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, SignatureException, IllegalArgumentException {
+    private boolean validateToken(String encryptToken) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, SignatureException, IllegalArgumentException {
 
         try {
-
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token); // JWT 모듈이 알아서 Exception을 던져줌
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(CryptoUtil.decrypt(encryptToken)); // JWT 모듈이 알아서 Exception을 던져줌
 
             return true;
         }catch (ExpiredJwtException e) { // Exception when having the expired token
@@ -176,14 +175,14 @@ public class TokenProvider {
 
     /**
      * token에서 정보를 추출
-     * @param token
+     * @param encryptToken
      * @return
      */
-    private Claims parseClaims(String token) {
+    private Claims parseClaims(String encryptToken) {
 
         try {
 
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(CryptoUtil.decrypt(encryptToken)).getBody();
         }catch (ExpiredJwtException e) {
 
             return e.getClaims();
@@ -197,26 +196,27 @@ public class TokenProvider {
      */
     private String getRefreshTokenInCookie(HttpServletRequest request) {
 
-        String refreshTokenInCookie = "";
+        String encryptoRefreshTokenInCookie = "";
         Cookie[] cookies = request.getCookies();
         for (Cookie cookie : cookies) {
             if ("refreshToken".equals(cookie.getName())) {
-                refreshTokenInCookie = cookie.getValue();
+                encryptoRefreshTokenInCookie = cookie.getValue();
+                break;
             }
         }
 
-        return refreshTokenInCookie;
+        return encryptoRefreshTokenInCookie;
     }
     /**
      * accessToken을 갱신
-     * @param accessToken
+     * @param encryptoAccessToken
      * @param request
      * @return
      */
     @Transactional
-    public TokenDto updateRefreshToken(String accessToken, HttpServletRequest request) {
+    public TokenDto updateRefreshToken(String encryptoAccessToken, HttpServletRequest request) {
 
-        String refreshTokenInCookie = this.getRefreshTokenInCookie(request);
+        String refreshTokenInCookie = CryptoUtil.decrypt(this.getRefreshTokenInCookie(request));
 
         // cookie에 담겨있던 Refresh Token 검증
         if(!this.validateToken(refreshTokenInCookie)) {
@@ -224,14 +224,15 @@ public class TokenProvider {
         }
 
         // access token에서 사용자 정보(member id) 가져옴
-        Authentication authentication = this.getAuthentication(accessToken);
+        Authentication authentication = this.getAuthentication(CryptoUtil.decrypt(encryptoAccessToken));
 
         // DB에서 member id를 기반으로 refresh token 값 가져옴
-        RefreshToken refreshTokenInDB = refreshTokenRepository.findByKey(authentication.getName())
+        RefreshToken refreshTokenObjectInDB = refreshTokenRepository.findByKey(authentication.getName())
                 .orElseThrow(() -> new CustomException(CustomErrorCode.ERR_ALREADY_LOGOUT)); // 이미 로그아웃된 사용자의 경우
+        String refreshTokenInDB = CryptoUtil.decrypt(refreshTokenObjectInDB.getValue());
 
         // db에 저장되어 있는 refresh token과 사용자가 보낸 refresh token이 같은지 비교
-        if(!refreshTokenInDB.getValue().equals(refreshTokenInCookie)) {
+        if(!refreshTokenInDB.equals(refreshTokenInCookie)) {
             throw new CustomException(CustomErrorCode.ERR_INVALID_TOKEN_USER);
         }
 
@@ -239,8 +240,8 @@ public class TokenProvider {
         TokenDto tokenDto = this.generateTokenDto(authentication);
 
         // db에 새로운 토큰 업데이트
-        RefreshToken newRefreshToken = refreshTokenInDB.updateValue(tokenDto.getRefreshToken());
-        refreshTokenRepository.save(newRefreshToken);
+        RefreshToken newRefreshTokenObject = refreshTokenObjectInDB.updateValue(tokenDto.getEncryptoRefreshToken());
+        refreshTokenRepository.save(newRefreshTokenObject);
 
         return tokenDto;
     }
