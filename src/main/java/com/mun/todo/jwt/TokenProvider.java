@@ -98,12 +98,12 @@ public class TokenProvider {
 
     /**
      * JWT 토큰을 복호화하여 토큰에 들어있는 정보를 가져옴
-     * @param accessToken
+     * @param encryptoAccessToken
      * @return
      */
-    public Authentication getAuthentication(String accessToken) {
+    public Authentication getAuthentication(String encryptoAccessToken) {
 
-        Claims claims = parseClaims(accessToken);
+        Claims claims = this.parseClaims(encryptoAccessToken);
 
         if(claims.get(AUTHORIZATION_HEADER) == null) {
             throw new CustomException(CustomErrorCode.ERR_UNAUTHORIZED_REFRESH_TOKEN);
@@ -127,7 +127,6 @@ public class TokenProvider {
     public void validateAndUpdateAccessToken(String encryptoAccessToken, HttpServletRequest request, HttpServletResponse response) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, IllegalArgumentException {
 
         try {
-
             this.validateToken(encryptoAccessToken);
         }catch (ExpiredJwtException e) {
 
@@ -181,10 +180,8 @@ public class TokenProvider {
     private Claims parseClaims(String encryptToken) {
 
         try {
-
             return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(CryptoUtil.decrypt(encryptToken)).getBody();
         }catch (ExpiredJwtException e) {
-
             return e.getClaims();
         }
     }
@@ -216,23 +213,23 @@ public class TokenProvider {
     @Transactional
     public TokenDto updateRefreshToken(String encryptoAccessToken, HttpServletRequest request) {
 
-        String refreshTokenInCookie = CryptoUtil.decrypt(this.getRefreshTokenInCookie(request));
+        String encryptoRefreshTokenInCookie = this.getRefreshTokenInCookie(request);
 
         // cookie에 담겨있던 Refresh Token 검증
-        if(!this.validateToken(refreshTokenInCookie)) {
+        if(!this.validateToken(encryptoRefreshTokenInCookie)) {
             throw new CustomException(CustomErrorCode.ERR_INVALID_REFRESH_TOKEN);
         }
 
         // access token에서 사용자 정보(member id) 가져옴
-        Authentication authentication = this.getAuthentication(CryptoUtil.decrypt(encryptoAccessToken));
+        Authentication authentication = this.getAuthentication(encryptoAccessToken);
 
         // DB에서 member id를 기반으로 refresh token 값 가져옴
         RefreshToken refreshTokenObjectInDB = refreshTokenRepository.findByKey(authentication.getName())
-                .orElseThrow(() -> new CustomException(CustomErrorCode.ERR_ALREADY_LOGOUT)); // 이미 로그아웃된 사용자의 경우
-        String refreshTokenInDB = CryptoUtil.decrypt(refreshTokenObjectInDB.getValue());
+                .orElseThrow(() -> new CustomException(CustomErrorCode.ERR_ALREADY_LOGOUT)); // 리프레시 토큰이 없으면이미 로그아웃된 사용자의 경우
+        String encryptoRefreshTokenInDB = refreshTokenObjectInDB.getValue();
 
         // db에 저장되어 있는 refresh token과 사용자가 보낸 refresh token이 같은지 비교
-        if(!refreshTokenInDB.equals(refreshTokenInCookie)) {
+        if(!encryptoRefreshTokenInDB.equals(encryptoRefreshTokenInCookie)) {
             throw new CustomException(CustomErrorCode.ERR_INVALID_TOKEN_USER);
         }
 

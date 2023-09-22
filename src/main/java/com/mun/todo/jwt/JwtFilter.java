@@ -53,14 +53,14 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         // 1. request의 header에서 토큰 꺼내기
-        String accessToken = resolveToken(request);
-        if(StringUtils.hasText(accessToken)){
+        String encrytoaccessToken = resolveToken(request);
+        if(StringUtils.hasText(encrytoaccessToken)){
 
             // 2. 토큰 유효성 검사하고 만료되었으면 갱신하기
-            tokenProvider.validateAndUpdateAccessToken(accessToken, request, response);
+            tokenProvider.validateAndUpdateAccessToken(encrytoaccessToken, request, response);
 
             // 2-1. 토큰에서 authentication 객체 가지고 오기
-            Authentication authentication = tokenProvider.getAuthentication(accessToken);
+            Authentication authentication = tokenProvider.getAuthentication(encrytoaccessToken);
             // 2-2. 가져온 인증 객체 (authentication)를 SecurityContextHolder에 담기
             SecurityContextHolder.getContext().setAuthentication(authentication);
 

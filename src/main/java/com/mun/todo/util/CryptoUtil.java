@@ -18,6 +18,7 @@ public class CryptoUtil {
 
     private static String salt;
 
+    // @Value가 static 필드에서 동작하지 않기 때문에 이와 같이 메소드로 처리함
     @Value("${crypto.secret}")
     public void setSecretKey(String secret) {
         CryptoUtil.secretKey = secret;
@@ -37,12 +38,12 @@ public class CryptoUtil {
             byte[] encrypted = cipher.doFinal(data.getBytes());
             return Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
-            log.info("??");
             throw new RuntimeException(e);
         }
     }
 
     public static String decrypt(String encryptedData) {
+
         SecretKey secret = new SecretKeySpec(secretKey.getBytes(), "AES");
         IvParameterSpec iv = new IvParameterSpec(salt.getBytes());
         try {
