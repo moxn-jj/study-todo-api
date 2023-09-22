@@ -12,6 +12,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -124,15 +125,53 @@ public class TokenProvider {
      * @param encryptoAccessToken
      * @return
      */
-    public void validateAndUpdateAccessToken(String encryptoAccessToken, HttpServletRequest request, HttpServletResponse response) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, IllegalArgumentException {
+    public String validateAndUpdateAccessToken(String encryptoAccessToken, HttpServletRequest request, HttpServletResponse response) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, IllegalArgumentException {
 
         try {
             this.validateToken(encryptoAccessToken);
+            return encryptoAccessToken;
         }catch (ExpiredJwtException e) {
 
-            String newEncryptoAccessToken = this.updateRefreshToken(encryptoAccessToken, request).getEncryptoAccessToken();
+            String newEncryptoAccessToken = this.updateRefreshToken(encryptoAccessToken, request, response).getEncryptoAccessToken();
             response.addHeader("Authorization", BEARER_PREFIX + " " + newEncryptoAccessToken);
+            return newEncryptoAccessToken;
         }
+    }
+
+    /**
+     * cookie에 refresh token을 담음
+     * @param response
+     * @param encryptoRefreshToken
+     */
+    public void setRefreshTokenInCookie(HttpServletResponse response, String encryptoRefreshToken) {
+
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", encryptoRefreshToken)
+                .maxAge(7 * 24 * 60 * 60)
+                .path("/")
+                .secure(true)
+                .sameSite("None")
+                .httpOnly(true)
+                .build();
+        response.setHeader("Set-Cookie", cookie.toString());
+    }
+
+    /**
+     * cookie에 있는 refresh token을 가져옴
+     * @param request
+     * @return
+     */
+    private String getRefreshTokenInCookie(HttpServletRequest request) {
+
+        String encryptoRefreshTokenInCookie = "";
+        Cookie[] cookies = request.getCookies();
+        for (Cookie cookie : cookies) {
+            if ("refreshToken".equals(cookie.getName())) {
+                encryptoRefreshTokenInCookie = cookie.getValue();
+                break;
+            }
+        }
+
+        return encryptoRefreshTokenInCookie;
     }
 
     /**
@@ -187,31 +226,13 @@ public class TokenProvider {
     }
 
     /**
-     * cookie에 있는 refresh token을 가져옴
-     * @param request
-     * @return
-     */
-    private String getRefreshTokenInCookie(HttpServletRequest request) {
-
-        String encryptoRefreshTokenInCookie = "";
-        Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            if ("refreshToken".equals(cookie.getName())) {
-                encryptoRefreshTokenInCookie = cookie.getValue();
-                break;
-            }
-        }
-
-        return encryptoRefreshTokenInCookie;
-    }
-    /**
      * accessToken을 갱신
      * @param encryptoAccessToken
      * @param request
      * @return
      */
     @Transactional
-    public TokenDto updateRefreshToken(String encryptoAccessToken, HttpServletRequest request) {
+    public TokenDto updateRefreshToken(String encryptoAccessToken, HttpServletRequest request, HttpServletResponse response) {
 
         String encryptoRefreshTokenInCookie = this.getRefreshTokenInCookie(request);
 
@@ -234,12 +255,15 @@ public class TokenProvider {
         }
 
         // 새로운 토큰 생성
-        TokenDto tokenDto = this.generateTokenDto(authentication);
+        TokenDto newTokenDto = this.generateTokenDto(authentication);
+
+        // refreshToken을 Cookie에 담음
+        this.setRefreshTokenInCookie(response, newTokenDto.getEncryptoRefreshToken());
 
         // db에 새로운 토큰 업데이트
-        RefreshToken newRefreshTokenObject = refreshTokenObjectInDB.updateValue(tokenDto.getEncryptoRefreshToken());
+        RefreshToken newRefreshTokenObject = refreshTokenObjectInDB.updateValue(newTokenDto.getEncryptoRefreshToken());
         refreshTokenRepository.save(newRefreshTokenObject);
 
-        return tokenDto;
+        return newTokenDto;
     }
 }

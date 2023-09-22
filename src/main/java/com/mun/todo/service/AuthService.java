@@ -78,14 +78,7 @@ public class AuthService {
         refreshTokenRepository.save(refreshToken);
 
         // refreshToken을 Cookie에 담음
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDto.getEncryptoRefreshToken())
-                .maxAge(7 * 24 * 60 * 60)
-                .path("/")
-                .secure(true)
-                .sameSite("None")
-                .httpOnly(true)
-                .build();
-        response.setHeader("Set-Cookie", cookie.toString());
+        tokenProvider.setRefreshTokenInCookie(response, tokenDto.getEncryptoRefreshToken());
 
         // refreshToken 값을 기본값으로 초기화
         tokenDto.resetRefreshTokenForSecure();

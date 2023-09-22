@@ -57,7 +57,7 @@ public class JwtFilter extends OncePerRequestFilter {
         if(StringUtils.hasText(encrytoaccessToken)){
 
             // 2. 토큰 유효성 검사하고 만료되었으면 갱신하기
-            tokenProvider.validateAndUpdateAccessToken(encrytoaccessToken, request, response);
+            encrytoaccessToken = tokenProvider.validateAndUpdateAccessToken(encrytoaccessToken, request, response);
 
             // 2-1. 토큰에서 authentication 객체 가지고 오기
             Authentication authentication = tokenProvider.getAuthentication(encrytoaccessToken);
