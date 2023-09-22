@@ -11,13 +11,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/todos")
+@RequestMapping("/api/todo")
 public class TodoController {
 
     private final TodoService todoService;
@@ -28,7 +29,7 @@ public class TodoController {
      * @throws Exception
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getTodos(Authentication auth) {
+    public ResponseEntity<List<Todo>> getTodos(Authentication auth) {
 
         if(auth == null || StringUtils.isBlank(auth.getName())){
             throw new CustomException(CustomErrorCode.ERR_BAD_REQUEST);
@@ -45,13 +46,12 @@ public class TodoController {
      * @throws Exception
      */
     @PostMapping
-    public ResponseEntity<HttpStatus> postTodo(@RequestBody Todo todo, Authentication auth) {
+    public ResponseEntity<Todo> postTodo(@RequestBody Todo todo, Authentication auth) {
 
         todo.setIsComplete(false);
         todo.setMemberId(Long.parseLong(auth.getName()));
-        todoService.postTodo(todo);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(todoService.postTodo(todo));
     }
 
     /**
@@ -64,8 +64,7 @@ public class TodoController {
     public ResponseEntity<HttpStatus> putTodo(@PathVariable("id") Long id) {
 
         Todo todo = todoService.findTodoById(id);
-        Boolean isComplete = todo.getIsComplete()? false : true;
-        todo.setIsComplete(isComplete);
+        todo.setIsComplete(!todo.getIsComplete());
         todoService.postTodo(todo);
 
         return new ResponseEntity<>(HttpStatus.OK);

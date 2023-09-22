@@ -22,8 +22,8 @@ public class TodoService {
          return todoRepository.findAllByMemberId(memberId, sort);
     }
 
-    public void postTodo(Todo todo) {
-        todoRepository.save(todo);
+    public Todo postTodo(Todo todo) {
+        return todoRepository.save(todo);
     }
 
     public void deleteTodo(Long id) {
